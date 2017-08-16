@@ -1,5 +1,5 @@
-# dialogue_prediction
-predict the next sentence of a dialogue
+# RNN encoding
+Generate vector representation of sentences
 
 # Requirement
     *tensorflow 1.1.0
