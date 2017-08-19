@@ -53,6 +53,7 @@ parser.add_argument('--version',default='vanilla')
 # data path
 parser.add_argument('--train_path',default='data/pts')
 parser.add_argument('--test_path',default='data/AIFirst_test_problem.txt')
+parser.add_argument('--result_output',default=None)
 
 # directory
 parser.add_argument('--load_dir', default='')
@@ -120,17 +121,17 @@ def main(_):
     params = params_class(**params_dict)
 
     ## load params and words from load_dir ##
-    if not params.load_dir == '':
+    if params.load_dir != '':
         params_filename = os.path.join(params.load_dir, 'params.json')
         load_params = load_params_dict(params_filename)
-        if params.action == 'train' and (not load_params['task'] == params.task):
-            raise Exception("incompatible task with load model!")
         if (not load_params['arch'] == params.arch):
             raise Exception("incompatible main model with load model!")
         params = params._replace(**load_params)
         
         words_filename = os.path.join(params.load_dir, 'words.pickle')
         words = load_words_dict(words_filename)
+    elif args.action == 'test':
+        raise Exception('you should load model before testing, using --load_dir')
     else:
         if tf.gfile.Exists(save_dir):
             tf.gfile.DeleteRecursively(save_dir)
@@ -142,18 +143,24 @@ def main(_):
         main_model.train_process(train, val,verbose = True)
         main_model.save_params()
     elif args.action == 'test':
+        assert args.result_output is not None,'you should specify result output by --result_output'
         dialogue,options = read_test_data(args.test_path)
         probs = main_model.test_process(dialogue,options,mode='match')  
-        for index, d in enumerate(dialogue):
-            option = options[index]
-            print (d)
+        with open(args.result_output,'w') as f:
+            print ('id,answer',file=f)
+            ids=1
+            for index, d in enumerate(dialogue):
+                option = options[index]
+                print (d)
 
-            for i,o in enumerate(option):
-                print ('    (%d) %s : '%(i,o), end='')
-                print (probs[index][i],sep=' | ')
-            print ('choose : ',np.argmax(probs[index],axis=0))
-           
-            print('\n===========================')
-                
+                for i,o in enumerate(option):
+                    print ('    (%d) %s : '%(i,o), end='')
+                    print (probs[index][i])
+                ans = np.argmax(probs[index])
+                print ('choose : ',ans)
+               
+                print('\n===========================')
+                print ('%d,%d'%(ids,ans),file=f)
+                ids += 1
 if __name__ == '__main__':
     tf.app.run()
