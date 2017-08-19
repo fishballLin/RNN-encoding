@@ -49,7 +49,7 @@ class BaseModel(metaclass=ABCMeta):
                     self.save(self.global_step)
                 self.train_finish()
         except KeyboardInterrupt:
-            self.save(self.global_step)
+            #self.save(self.global_step)
             pass
     
     def test_process(self,dialogues,options=None,mode='gen'):

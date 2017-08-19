@@ -150,8 +150,7 @@ class VanillaRNN(RNNBaseModel):
                             'dialogue_size':params.dialogue_size,
                             'response_size':params.response_size,
                             'dialogue_counts':params.dialogue_counts,
-                            'arch': params.arch,
-                            'task': params.task}
+                            'arch': params.arch}
         with open(filename, 'w') as file:
             json.dump(save_params_dict, file, indent=4)
 

@@ -20,9 +20,6 @@ from model.RNN.vanilla import VanillaRNN
 ## accessible model ##
 MODEL = {'RNN_vanilla':          VanillaRNN}
 
-test_path = 'data/AIFirst_test_problem.txt'
-
-pts_path = './data/format_data/pts_processed'
 def load_params_dict(filename):
     with open(filename, 'r') as file:
         params_dict = json.load(file)
@@ -49,15 +46,18 @@ def test_normal(model, params, expert_params, lm_params, words, test):
 parser = argparse.ArgumentParser(description='dialogue prediction')
 
 # Action and target and arch
-parser.add_argument('action', choices=['train', 'test_gen','test_type','test_match'])
-parser.add_argument('arch', default = 'RNN',choices=['RNN'])
-parser.add_argument('version',default='')
+parser.add_argument('action', choices=['train', 'test'])
+parser.add_argument('--arch', default = 'RNN',choices=['RNN'])
+parser.add_argument('--version',default='vanilla')
+
+# data path
+parser.add_argument('--train_path',default='data/pts')
+parser.add_argument('--test_path',default='data/AIFirst_test_problem.txt')
 
 # directory
 parser.add_argument('--load_dir', default='')
 
 # training options
-parser.add_argument('--task', default='pts',choices=['pts'])
 parser.add_argument('--batch_size', default=64, type=int)
 parser.add_argument('--num_epochs', default=100, type=int)
 parser.add_argument('--learning_rate', default=0.002, type=float)
@@ -88,7 +88,7 @@ def main(_):
         raise Exception("Unsupported target-arch pair!")
 
     ## create save dir ##
-    save_dir = os.path.join('save', '{}_{}_{}'.format(args.arch, args.version, args.task))
+    save_dir = os.path.join('save', '{}_{}'.format(args.arch, args.version))
     if args.arch == 'RNN':
         save_dir += '_%d'%args.RNN_hidden_size
     
@@ -103,8 +103,7 @@ def main(_):
     words = WordTable()
     ## data set ##
     if args.action == 'train':
-        if args.task == 'pts':
-            path = [pts_path]
+        path = [args.train_path]
         train, words, args.dialogue_size, args.response_size = read_data(path ,args.batch_size,args.use_stopwords)
         val = train.split_dataset(args.val_ratio)
     
@@ -142,15 +141,8 @@ def main(_):
     if args.action == 'train':
         main_model.train_process(train, val,verbose = True)
         main_model.save_params()
-    elif args.action == 'test_gen':
-        main_model.test_process(test,'gen')
-    elif args.action == 'test_type':
-        while True:
-            inputs = input('> ')
-            gen = main_model.test_process(inputs,mode='type')
-            print ('> %s'%gen[0])
-    elif args.action == 'test_match':
-        dialogue,options = read_test_data(test_path)
+    elif args.action == 'test':
+        dialogue,options = read_test_data(args.test_path)
         probs = main_model.test_process(dialogue,options,mode='match')  
         for index, d in enumerate(dialogue):
             option = options[index]
